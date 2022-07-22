@@ -80,8 +80,8 @@ func lookupHostnames(host string, hostnames []string, iterations int, servers []
 		if len(success) > 0 {
 			lookups = append(success, failed...)
 		} else {
-			fmt.Printf("Unable to detect any LANCache instances\n\n")
-			return
+			fmt.Printf("Unable to detect any LANCache instances %s\n\n", resolverMsg)
+			continue
 		}
 
 		if host != "" {
