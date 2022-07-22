@@ -77,7 +77,7 @@ func custom(servers []string) {
 			"Epic Games", "Frontier", "Neverwinter", "Nexus Mods", "Nintendo", "Origin", "Path of Exile",
 			"RenegadeX", "Riot Games", "Rockstar Games", "Sony", "SQUARE ENIX", "Steam", "The Elder Scrolls Online",
 			"UPlay", "Warframe", "WARGAMING", "Windows Updates", "Xbox Live"},
-		PageSize: 20,
+		PageSize: 24,
 	}
 
 	err := survey.AskOne(prompt, &result)
