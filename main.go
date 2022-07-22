@@ -82,14 +82,18 @@ func full(servers []string, logger io.Writer, logfile *os.File) {
 }
 
 func custom(servers []string, logger io.Writer) {
-	var result []string
+	var (
+		options []string
+		result  []string
+	)
+
+	for _, cdn := range CDNs {
+		options = append(options, cdn.Name)
+	}
 
 	prompt := &survey.MultiSelect{
-		Message: "Select CDN(s):",
-		Options: []string{"ArenaNet", "Blizzard", "Battle State Games", "City of Heroes", "Daybreak Games",
-			"Epic Games", "Frontier", "Neverwinter", "Nexus Mods", "Nintendo", "Origin", "Path of Exile",
-			"RenegadeX", "Riot Games", "Rockstar Games", "Sony", "SQUARE ENIX", "Steam", "The Elder Scrolls Online",
-			"UPlay", "Warframe", "WARGAMING", "Windows Updates", "Xbox Live"},
+		Message:  "Select CDN(s):",
+		Options:  options,
 		PageSize: 24,
 	}
 
