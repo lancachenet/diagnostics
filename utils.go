@@ -232,16 +232,6 @@ func isLookupInSliceEqual(a []Lookup, multihost bool) []Lookup {
 	return l
 }
 
-func isStringInSlice(needle string, haystack []string) (inSlice bool) {
-	for _, b := range haystack {
-		if b == needle {
-			return true
-		}
-	}
-
-	return false
-}
-
 func URLToLines(url string) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {

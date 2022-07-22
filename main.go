@@ -69,15 +69,14 @@ func full(servers []string) {
 }
 
 func custom(servers []string) {
-selection:
 	file := ""
 	result := []string{}
 	prompt := &survey.MultiSelect{
 		Message: "Select CDN(s):",
-		Options: []string{"Back", "ArenaNet", "Blizzard", "Battle State Games", "City of Heroes", "Daybreak Games",
+		Options: []string{"ArenaNet", "Blizzard", "Battle State Games", "City of Heroes", "Daybreak Games",
 			"Epic Games", "Frontier", "Neverwinter", "Nexus Mods", "Nintendo", "Origin", "Path of Exile",
 			"RenegadeX", "Riot Games", "Rockstar Games", "Sony", "SQUARE ENIX", "Steam", "The Elder Scrolls Online",
-			"UPlay", "Warframe", "WARGAMING", "Windows Updates", "Xbox Live", "Exit"},
+			"UPlay", "Warframe", "WARGAMING", "Windows Updates", "Xbox Live"},
 		PageSize: 20,
 	}
 
@@ -87,24 +86,15 @@ selection:
 		return
 	}
 
-	switch {
-	case isStringInSlice("Back", result):
-		main()
-	case isStringInSlice("Exit", result):
-		os.Exit(0)
-	default:
-		for _, cdn := range result {
-			for _, cdns := range CDNs {
-				if cdn == cdns.Name {
-					file = cdns.File
-					hostnames := parseCDN(cdn, file)
-					lookupHostnames("", hostnames, 1, servers)
-				} else {
-					continue
-				}
+	for _, cdn := range result {
+		for _, cdns := range CDNs {
+			if cdn == cdns.Name {
+				file = cdns.File
+				hostnames := parseCDN(cdn, file)
+				lookupHostnames("", hostnames, 1, servers)
+			} else {
+				continue
 			}
 		}
 	}
-
-	goto selection
 }
