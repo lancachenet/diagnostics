@@ -8,7 +8,9 @@ type CDN struct {
 }
 
 type Lookup struct {
+	Resolver    string
 	Hostname    string
 	Address     []net.IP
 	ContainerID string
+	Time        string
 }

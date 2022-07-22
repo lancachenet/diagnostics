@@ -7,47 +7,48 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 	"time"
 )
 
-func getInterfaceAddresses() {
+func getInterfaceAddresses(logger io.Writer) {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		fmt.Print(fmt.Errorf("error: %w", err))
+		_, _ = fmt.Fprint(logger, fmt.Errorf("error: %w", err))
 		return
 	}
 
-	fmt.Printf("\n")
+	_, _ = fmt.Fprintf(logger, "\n")
 
 	for _, i := range interfaces {
 		addresses, err := i.Addrs()
 		if err != nil {
-			fmt.Print(fmt.Errorf("error: %w", err))
+			_, _ = fmt.Fprint(logger, fmt.Errorf("error: %w", err))
 			continue
 		}
 
 		if strings.Contains(i.Flags.String(), up) {
 			if !strings.Contains(strings.ToLower(i.Name), loopback) && !strings.Contains(i.Flags.String(), loopback) {
-				fmt.Printf("Interface: %s\n", i.Name)
+				_, _ = fmt.Fprintf(logger, "Interface: %s\n", i.Name)
 
 				for _, a := range addresses {
 					switch v := a.(type) {
 					case *net.IPAddr:
-						fmt.Printf("IP Address: %s\n", v)
+						_, _ = fmt.Fprintf(logger, "IP Address: %s\n", v)
 
 					case *net.IPNet:
-						fmt.Printf("IP Address: %s\n", v)
+						_, _ = fmt.Fprintf(logger, "IP Address: %s\n", v)
 					}
 				}
-				fmt.Printf("\n")
+				_, _ = fmt.Fprintf(logger, "\n")
 			}
 		}
 	}
 }
 
-func lookupHostnames(host string, hostnames []string, iterations int, servers []string) {
+func lookupHostnames(host string, hostnames []string, iterations int, servers []string, logger io.Writer, logfile *os.File, debug bool) {
 	var (
 		lookups []Lookup
 		success []Lookup
@@ -65,45 +66,39 @@ func lookupHostnames(host string, hostnames []string, iterations int, servers []
 
 		for i := 0; i < iterations; i++ {
 			if host != "" {
-				s, f := processHostnames(host, "")
+				s, f := processHostnames(host, resolver, logger)
 				success = append(success, s...)
 				failed = append(failed, f...)
 			} else {
 				for _, hostname := range hostnames {
-					s, f := processHostnames(hostname, resolver)
+					s, f := processHostnames(hostname, resolver, logger)
 					success = append(success, s...)
 					failed = append(failed, f...)
 				}
 			}
 		}
 
+		unwrappedSuccess, unwrappedFail := unwrapLookups(success, failed)
+
 		if len(success) > 0 {
 			lookups = append(success, failed...)
 		} else {
-			fmt.Printf("Unable to detect any LANCache instances %s\n\n", resolverMsg)
+			_, _ = fmt.Fprintf(logger, "Unable to detect any LANCache instances %s\n\n", resolverMsg)
+			if debug {
+				_, _ = fmt.Fprintf(logfile, "Successfull lookups: %d\n"+
+					"%s"+
+					"\nFailed lookups: %d\n"+
+					"%s\n", len(success), unwrappedSuccess, len(failed), unwrappedFail)
+			}
 			continue
 		}
 
-		if host != "" {
-			deltas = isLookupInSliceEqual(lookups, false)
-		} else {
-			deltas = isLookupInSliceEqual(lookups, true)
-		}
-
+		deltas = isLookupInSliceEqual(lookups)
 		if len(deltas) > 0 {
-			unwrappedSuccess := ""
-			unwrappedFail := ""
-			for _, s := range success {
-				unwrappedSuccess += fmt.Sprintf("+%+v\n", s)
-			}
-			for _, f := range failed {
-				unwrappedFail += fmt.Sprintf("-%+v\n", f)
-			}
-
 			first := lookups[0]
 
 			if host != "" {
-				fmt.Printf("Unsuccessfully ran %d diagnostics iterations %s\n"+
+				_, _ = fmt.Fprintf(logger, "Unsuccessfully ran %d diagnostics iteration(s) %s\n"+
 					"\nSuccessfull lookups: %d\n"+
 					"%s"+
 					"\nFailed lookups: %d\n"+
@@ -111,7 +106,7 @@ func lookupHostnames(host string, hostnames []string, iterations int, servers []
 					"\nDidn't match:\n"+
 					"%+v\n\n", iterations, resolverMsg, len(success), unwrappedSuccess, len(failed), unwrappedFail, first)
 			} else {
-				fmt.Printf("Unsuccessfully ran %d diagnostics iterations on %d hosts %s\n"+
+				_, _ = fmt.Fprintf(logger, "Unsuccessfully ran %d diagnostics iteration(s) on %d host(s) %s\n"+
 					"\nSuccessfull lookups: %d\n"+
 					"%s"+
 					"\nFailed lookups: %d\n"+
@@ -121,15 +116,21 @@ func lookupHostnames(host string, hostnames []string, iterations int, servers []
 			}
 		} else {
 			if host != "" {
-				fmt.Printf("Successfully ran %d diagnostics iterations %s\n\n", iterations, resolverMsg)
+				_, _ = fmt.Fprintf(logger, "Successfully ran %d diagnostics iteration(s) %s\n\n", iterations, resolverMsg)
 			} else {
-				fmt.Printf("Successfully ran %d diagnostics iterations on %d hosts %s\n\n", iterations, len(hostnames), resolverMsg)
+				_, _ = fmt.Fprintf(logger, "Successfully ran %d diagnostics iteration(s) on %d host(s) %s\n\n", iterations, len(hostnames), resolverMsg)
+			}
+			if debug {
+				_, _ = fmt.Fprintf(logfile, "Successfull lookups: %d\n"+
+					"%s"+
+					"\nFailed lookups: %d\n"+
+					"%s\n", len(success), unwrappedSuccess, len(failed), unwrappedFail)
 			}
 		}
 	}
 }
 
-func processHostnames(hostname, resolver string) (success, failed []Lookup) {
+func processHostnames(hostname, resolver string, logger io.Writer) (success, failed []Lookup) {
 	var (
 		ips []net.IP
 		err error
@@ -152,9 +153,11 @@ func processHostnames(hostname, resolver string) (success, failed []Lookup) {
 	}
 
 	if err != nil {
-		fmt.Printf("Could not get IPs: %v\n", err)
+		_, _ = fmt.Fprintf(logger, "Could not get IPs: %v\n", err)
 		failed = append(failed, Lookup{
+			Resolver: resolver,
 			Hostname: hostname,
+			Time:     time.Now().String(),
 		})
 		return success, failed
 	}
@@ -169,35 +172,43 @@ func processHostnames(hostname, resolver string) (success, failed []Lookup) {
 	resp, err := client.Get(httpPrefix + hostname + heartbeatSuffix)
 	if err != nil {
 		failed = append(failed, Lookup{
+			Resolver: resolver,
 			Hostname: hostname,
 			Address:  ips,
+			Time:     time.Now().Format(time.RFC822),
 		})
 		return success, failed
 	}
 
 	if resp.Header.Get(lancacheHeader) != "" {
 		success = append(success, Lookup{
+			Resolver:    resolver,
 			Hostname:    hostname,
 			Address:     ips,
 			ContainerID: resp.Header.Get(lancacheHeader),
+			Time:        time.Now().Format(time.RFC822),
 		})
 	} else {
 		failed = append(failed, Lookup{
+			Resolver: resolver,
 			Hostname: hostname,
 			Address:  ips,
+			Time:     time.Now().Format(time.RFC822),
 		})
 	}
 
 	return success, failed
 }
 
-func parseCDN(name, file string) (hostnames []string) {
-	cdnHosts, err := URLToLines(cacheRepo + file)
+func parseCDN(name, file string, logger io.Writer) (hostnames []string) {
+	cdnHosts, err := urlToLines(cacheRepo+file, logger)
 	if err != nil {
-		fmt.Print(fmt.Errorf("error: failed to parse cdn file %w", err))
+		_, _ = fmt.Fprint(logger, fmt.Errorf("error: failed to parse cdn file %w", err))
 	}
 
-	fmt.Printf("Looking up CDN: %s diagnostics addresses...\n", name)
+	_, _ = fmt.Fprintf(logger, "-----------------------------------------------------------------\n"+
+		"Looking up CDN: %s diagnostics addresses...\n"+
+		"-----------------------------------------------------------------\n", name)
 	for _, host := range cdnHosts {
 		host = strings.TrimSpace(host)
 		if strings.HasPrefix(host, "#") {
@@ -212,27 +223,33 @@ func parseCDN(name, file string) (hostnames []string) {
 	return hostnames
 }
 
-func isLookupInSliceEqual(a []Lookup, multihost bool) []Lookup {
+func isLookupInSliceEqual(a []Lookup) []Lookup {
 	var l []Lookup
 
 	for _, v := range a {
 		original := v
-		if multihost {
-			v.Hostname = a[0].Hostname
-		}
+		v.Hostname = a[0].Hostname
+		v.Time = a[0].Time
 		if !reflect.DeepEqual(v, a[0]) {
-			if multihost {
-				l = append(l, original)
-			} else {
-				l = append(l, v)
-			}
+			l = append(l, original)
 		}
 	}
 
 	return l
 }
 
-func URLToLines(url string) ([]string, error) {
+func unwrapLookups(s, f []Lookup) (success, fail string) {
+	for _, s := range s {
+		success += fmt.Sprintf("+%+v\n", s)
+	}
+	for _, f := range f {
+		fail += fmt.Sprintf("-%+v\n", f)
+	}
+
+	return success, fail
+}
+
+func urlToLines(url string, logger io.Writer) ([]string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -241,14 +258,14 @@ func URLToLines(url string) ([]string, error) {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			fmt.Print(fmt.Errorf("error: %w", err))
+			_, _ = fmt.Fprint(logger, fmt.Errorf("error: %w", err))
 		}
 	}(resp.Body)
 
-	return LinesFromReader(resp.Body)
+	return linesFromReader(resp.Body)
 }
 
-func LinesFromReader(r io.Reader) ([]string, error) {
+func linesFromReader(r io.Reader) ([]string, error) {
 	var lines []string
 
 	scanner := bufio.NewScanner(r)
