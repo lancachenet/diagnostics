@@ -1,0 +1,28 @@
+project_name: lancache-diagnostics
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+    gcflags:
+      - -trimpath
+    ldflags:
+      - -s -w
+archives:
+  - id: lancache-diagnostics
+    name_template: "{{ .ProjectName}}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    format: tar.gz
+snapshot:
+  name_template: "{{ .ProjectName}}-v{{ incpatch .Version }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
