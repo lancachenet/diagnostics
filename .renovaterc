@@ -15,6 +15,14 @@
   "packageRules": [
     {
       "datasources": [
+        "github-tags"
+      ],
+      "addLabels": [
+        "github-actions"
+      ]
+    },
+    {
+      "datasources": [
         "go"
       ],
       "addLabels": [
