@@ -16,10 +16,10 @@ builds:
       - -s -w
 archives:
   - id: lancache-diagnostics
-    name_template: "{{ .ProjectName}}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     format: tar.gz
 snapshot:
-  name_template: "{{ .ProjectName}}-v{{ incpatch .Version }}"
+  name_template: "{{ .ProjectName }}-v{{ incpatch .Version }}"
 changelog:
   sort: asc
   filters:
