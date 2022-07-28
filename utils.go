@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 func getInterfaceAddresses(logger io.Writer) {
@@ -132,24 +134,42 @@ func lookupHostnames(host string, hostnames []string, iterations int, servers []
 
 func processHostnames(hostname, resolver string, logger io.Writer) (success, failed []Lookup) {
 	var (
-		ips []net.IP
-		err error
+		dialer    net.Dialer
+		transport http.Transport
+		ips       []string
+		err       error
 	)
 
 	if resolver != "system" {
-		r := &net.Resolver{
-			PreferGo: true,
-			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-				d := net.Dialer{
-					Timeout: 1 * time.Second,
-				}
-				return d.DialContext(ctx, network, resolver)
-			},
+		// Fixed in Go 1.19: https://github.com/golang/go/issues/33097
+		//r := &net.Resolver{
+		//	PreferGo: true,
+		//	Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+		//		dialer = net.Dialer{
+		//			Timeout: 1 * time.Second,
+		//		}
+		//		return dialer.DialContext(ctx, network, resolver+portDNS)
+		//	},
+		//}
+		//
+		//ips, err = r.LookupHost(context.Background(), hostname)
+
+		ips, err = resolveIP(hostname, resolver+portDNS)
+		if len(ips) == 0 {
+			failed = append(failed, Lookup{
+				Resolver: resolver,
+				Hostname: hostname,
+				Time:     time.Now().Format(time.RFC822),
+			})
+			return success, failed
 		}
 
-		ips, err = r.LookupIP(context.Background(), "ip", hostname)
+		transport = http.Transport{DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			addr = ips[0] + portHTTP
+			return dialer.DialContext(ctx, network, addr)
+		}}
 	} else {
-		ips, err = net.LookupIP(hostname)
+		ips, err = net.LookupHost(hostname)
 	}
 
 	if err != nil {
@@ -157,13 +177,14 @@ func processHostnames(hostname, resolver string, logger io.Writer) (success, fai
 		failed = append(failed, Lookup{
 			Resolver: resolver,
 			Hostname: hostname,
-			Time:     time.Now().String(),
+			Time:     time.Now().Format(time.RFC822),
 		})
 		return success, failed
 	}
 
 	client := &http.Client{
-		Timeout: 1 * time.Second,
+		Timeout:   1 * time.Second,
+		Transport: &transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
@@ -221,6 +242,49 @@ func parseCDN(name, file string, logger io.Writer) (hostnames []string) {
 	}
 
 	return hostnames
+}
+
+func resolveIP(name, resolver string) ([]string, error) {
+	var addresses []string
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	client := new(dns.Client)
+	parsed := net.ParseIP(name)
+	if parsed != nil {
+		addresses = append(addresses, name)
+		return addresses, nil
+	}
+
+	messageAAAA := new(dns.Msg)
+	messageAAAA.SetQuestion(dns.Fqdn(name), dns.TypeAAAA)
+	inAAAA, _, err := client.ExchangeContext(ctx, messageAAAA, resolver)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range inAAAA.Answer {
+		if t, ok := record.(*dns.AAAA); ok {
+			addresses = append(addresses, t.AAAA.String())
+		}
+	}
+
+	messageA := new(dns.Msg)
+	messageA.SetQuestion(dns.Fqdn(name), dns.TypeA)
+	inA, _, err := client.ExchangeContext(ctx, messageA, resolver)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range inA.Answer {
+		if t, ok := record.(*dns.A); ok {
+			addresses = append(addresses, t.A.String())
+		}
+	}
+
+	return addresses, nil
 }
 
 func isLookupInSliceEqual(a []Lookup) []Lookup {

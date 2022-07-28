@@ -17,6 +17,9 @@ const (
 
 	testPrefix     = "lancachetest."
 	wildcardPrefix = "*."
+
+	portHTTP = ":80"
+	portDNS  = ":53"
 )
 
 var (

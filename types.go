@@ -1,7 +1,5 @@
 package main
 
-import "net"
-
 type CDN struct {
 	Name string
 	File string
@@ -10,7 +8,7 @@ type CDN struct {
 type Lookup struct {
 	Resolver    string
 	Hostname    string
-	Address     []net.IP
+	Address     []string
 	ContainerID string
 	Time        string
 }
