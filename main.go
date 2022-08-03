@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/miekg/dns"
 )
 
 func main() {
@@ -168,12 +167,12 @@ func lookupHostnames(host string, hostnames []string, iterations int, servers []
 
 		for i := 0; i < iterations; i++ {
 			if host != "" {
-				s, f := processHostnames(host, resolver, logger)
+				s, f := processHostnames(host, resolver, logfile)
 				success = append(success, s...)
 				failed = append(failed, f...)
 			} else {
 				for _, hostname := range hostnames {
-					s, f := processHostnames(hostname, resolver, logger)
+					s, f := processHostnames(hostname, resolver, logfile)
 					success = append(success, s...)
 					failed = append(failed, f...)
 				}
@@ -200,18 +199,10 @@ func lookupHostnames(host string, hostnames []string, iterations int, servers []
 	}
 }
 
-func processHostnames(hostname, resolver string, logger io.Writer) (success, failed []Lookup) {
+func processHostnames(hostname, resolver string, logfile *os.File) (success, failed []Lookup) {
 	ips, transport, err := resolveIP(hostname, resolver+portDNS)
-	if len(ips) == 0 {
-		failed = append(failed, Lookup{
-			Resolver: resolver,
-			Hostname: hostname,
-			Time:     time.Now().Format(time.RFC822),
-		})
-		return success, failed
-	}
 	if err != nil {
-		_, _ = fmt.Fprintf(logger, "Could not get IPs: %v\n", err)
+		_, _ = fmt.Fprintf(logfile, "Could not get IPs: %v\n", err)
 		failed = append(failed, Lookup{
 			Resolver: resolver,
 			Hostname: hostname,
@@ -294,68 +285,29 @@ func resolveIP(hostname, resolver string) ([]string, *http.Transport, error) {
 		ips    []string
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-
 	if resolver == systemResolver[0]+portDNS {
 		ips, err := net.LookupHost(hostname)
 		return ips, &http.Transport{}, err
 	}
 
-	// Fixed in Go 1.19: https://github.com/golang/go/issues/33097
-	//r := &net.Resolver{
-	//	PreferGo: true,
-	//	Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-	//		dialer = net.Dialer{
-	//			Timeout: 1 * time.Second,
-	//		}
-	//		return dialer.DialContext(ctx, network, resolver+portDNS)
-	//	},
-	//}
-	//
-	//ips, err = r.LookupHost(context.Background(), hostname)
-
-	client := new(dns.Client)
-	parsed := net.ParseIP(hostname)
-	if parsed != nil {
-		ips = append(ips, hostname)
-		return ips, &http.Transport{}, nil
+	r := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			dialer = net.Dialer{
+				Timeout: 1 * time.Second,
+			}
+			return dialer.DialContext(ctx, network, resolver)
+		},
 	}
 
-	messageAAAA := new(dns.Msg)
-	messageAAAA.SetQuestion(dns.Fqdn(hostname), dns.TypeAAAA)
-	inAAAA, _, err := client.ExchangeContext(ctx, messageAAAA, resolver)
-
-	if err != nil {
-		return nil, &http.Transport{}, err
-	}
-
-	for _, record := range inAAAA.Answer {
-		if t, ok := record.(*dns.AAAA); ok {
-			ips = append(ips, t.AAAA.String())
-		}
-	}
-
-	messageA := new(dns.Msg)
-	messageA.SetQuestion(dns.Fqdn(hostname), dns.TypeA)
-	inA, _, err := client.ExchangeContext(ctx, messageA, resolver)
-
-	if err != nil {
-		return nil, &http.Transport{}, err
-	}
-
-	for _, record := range inA.Answer {
-		if t, ok := record.(*dns.A); ok {
-			ips = append(ips, t.A.String())
-		}
-	}
+	ips, err := r.LookupHost(context.Background(), hostname)
 
 	transport := http.Transport{DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 		addr = ips[0] + portHTTP
 		return dialer.DialContext(ctx, network, addr)
 	}}
 
-	return ips, &transport, nil
+	return ips, &transport, err
 }
 
 func logOutput(host, resolverMsg, unwrappedSuccess, unwrappedFail string, hostnames []string, iterations int, lookups, success, failed, deltas []Lookup, logger io.Writer, logfile *os.File, debug bool) {
