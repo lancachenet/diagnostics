@@ -3,7 +3,7 @@ module lancache-diagnostics
 go 1.19
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.5
+	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/miekg/dns v1.1.50
 	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2
 )
