@@ -133,7 +133,7 @@ func getInterfaceAddresses(logger io.Writer) {
 			continue
 		}
 
-		if strings.Contains(i.Flags.String(), up) {
+		if strings.Contains(i.Flags.String(), running) {
 			if !strings.Contains(strings.ToLower(i.Name), loopback) && !strings.Contains(i.Flags.String(), loopback) {
 				_, _ = fmt.Fprintf(logger, "Interface: %s\n", i.Name)
 

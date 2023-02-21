@@ -5,7 +5,7 @@ const (
 	diagFull   = "Diagnostics - Full"
 	diagCustom = "Diagnostics - Custom"
 
-	up         = "up"
+	running    = "running"
 	loopback   = "loopback"
 	resolvConf = "/etc/resolv.conf"
 
