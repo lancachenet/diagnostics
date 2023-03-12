@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
-	github.com/miekg/dns v1.1.51
+	github.com/miekg/dns v1.1.52
 	golang.org/x/sys v0.6.0
 )
 
