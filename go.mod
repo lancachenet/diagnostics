@@ -7,7 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/miekg/dns v1.1.65
-	golang.org/x/sys v0.32.0
+	golang.org/x/sys v0.33.0
 )
 
 require (
