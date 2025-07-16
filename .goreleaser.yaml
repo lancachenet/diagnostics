@@ -3,7 +3,7 @@ project_name: lancache-diagnostics
 archives:
   - id: lancache-diagnostics
     name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
-    format: tar.gz
+    formats: [ 'tar.gz' ]
 
 builds:
   - env:
@@ -28,4 +28,4 @@ changelog:
       - '^test:'
 
 snapshot:
-  name_template: "{{ .ProjectName }}-v{{ incpatch .Version }}"
+  version_template: "{{ .ProjectName }}-v{{ incpatch .Version }}"
