@@ -10,25 +10,36 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/charmbracelet/huh"
 )
 
 func main() {
-	result := ""
-	prompt := &survey.Select{
-		Message: "Select Mode:",
-		Options: []string{"Diagnostics - Simple", "Diagnostics - Full", "Diagnostics - Custom", "Exit"},
-	}
+	mode := ""
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Select Mode:").
+				Options(
+					huh.NewOption("Diagnostics - Simple", "simple"),
+					huh.NewOption("Diagnostics - Full", "full"),
+					huh.NewOption("Diagnostics - Custom", "custom"),
+					huh.NewOption("Exit", "exit"),
+				).
+				Value(&mode),
+		),
+	)
 
-	if err := survey.AskOne(prompt, &result); err != nil {
-		fmt.Print(fmt.Errorf("error: prompt failed %w", err))
+	err := form.Run()
+	if err != nil {
+		fmt.Println(fmt.Errorf("error: prompt failed %w", err))
 		return
 	}
 
-	if strings.Contains(result, "Diagnostics") {
-		diagnostics(result)
-	} else if result == "Exit" {
+	switch mode {
+	case "exit":
 		os.Exit(0)
+	default:
+		diagnostics(mode)
 	}
 }
 
@@ -87,27 +98,39 @@ func full(servers []string, logger io.Writer, logfile *os.File) {
 
 func custom(servers []string, logger io.Writer) {
 	var (
-		options []string
-		result  []string
+		options []huh.Option[string]
+		value   []string
 	)
 
 	for _, cdn := range CDNs {
-		options = append(options, cdn.Name)
+		options = append(options, huh.NewOption(cdn.Name, cdn.Name))
 	}
 
-	prompt := &survey.MultiSelect{
-		Message:  "Select CDN(s):",
-		Options:  options,
-		PageSize: 24,
-	}
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewMultiSelect[string]().
+				Height(24).
+				Title("Select CDN(s):").
+				OptionsFunc(func() []huh.Option[string] {
+					return options
+				}, nil).
+				Validate(func(t []string) error {
+					if len(t) <= 0 {
+						return fmt.Errorf("At least one CDN is required.")
+					}
+					return nil
+				}).
+				Value(&value),
+		),
+	)
 
-	err := survey.AskOne(prompt, &result)
+	err := form.Run()
 	if err != nil {
 		_, _ = fmt.Fprint(logger, fmt.Errorf("error: prompt failed %w", err))
 		return
 	}
 
-	for _, cdn := range result {
+	for _, cdn := range value {
 		for _, cdns := range CDNs {
 			if cdn == cdns.Name {
 				hostnames := parseCDN(cdn, cdns.File, logger)
