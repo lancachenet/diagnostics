@@ -4,6 +4,9 @@ archives:
   - id: lancache-diagnostics
     name_template: "{{ .ProjectName }}-v{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     formats: [ 'tar.gz' ]
+    format_overrides:
+      - goos: windows
+        formats: [ "zip" ]
 
 builds:
   - env:
