@@ -109,7 +109,7 @@ func custom(servers []string, logger io.Writer) {
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewMultiSelect[string]().
-				Height(24).
+				Height(26).
 				Title("Select CDN(s):").
 				OptionsFunc(func() []huh.Option[string] {
 					return options
