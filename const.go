@@ -23,8 +23,8 @@ const (
 )
 
 var (
-	CDNs = []CDN{ArenaNet, Blizzard, BattleStateGames, CityOfHeroes, DaybreakGames, EpicGames, Frontier, Neverwinter,
-		NexusMods, Nintendo, Origin, PathOfExile, RenegadeX, RiotGames, RockstarGames, Sony, SquareEnix, Steam,
+	CDNs = []CDN{ArenaNet, Blizzard, BattleStateGames, CallOfDuty, CityOfHeroes, DaybreakGames, EpicGames, Frontier, Neverwinter,
+		NexusMods, Nintendo, Origin, PathOfExile, RenegadeX, RiotGames, RockstarGames, Sony, SquareEnix, Steam, Test,
 		TheElderScrollsOnline, UPlay, Warframe, Wargaming, WindowsUpdates, XboxLive}
 
 	ArenaNet = CDN{
@@ -38,6 +38,10 @@ var (
 	BattleStateGames = CDN{
 		Name: "Battle State Games",
 		File: "bsg.txt",
+	}
+	CallOfDuty = CDN{
+		Name: "Call of Duty",
+		File: "cod.txt",
 	}
 	CityOfHeroes = CDN{
 		Name: "City of Heroes",
@@ -98,6 +102,10 @@ var (
 	Steam = CDN{
 		Name: "Steam",
 		File: "steam.txt",
+	}
+	Test = CDN{
+		Name: "Test",
+		File: "test.txt",
 	}
 	TheElderScrollsOnline = CDN{
 		Name: "The Elder Scrolls Online",
