@@ -27,7 +27,8 @@ Looking up Steam diagnostics address...
 Successfully ran 6 diagnostics iteration(s) with system resolver
 ```
 
-Diagnostics — Custom mode allows users to select which CDNs they would like to run the diagnostics tool against, this mode also allows filtering search results by prepending your search with `/` as demonstrated below for the Steam CDN:
-[![asciicast](https://asciinema.org/a/RPYaBCODOrZ9f6z55DwqCuUyl.svg)](https://asciinema.org/a/RPYaBCODOrZ9f6z55DwqCuUyl)
+Diagnostics — Custom mode allows users to select which CDNs they would like to run the diagnostics tool against, this mode also allows filtering options by typing as demonstrated below for the Steam CDN:
+
+[![asciicast](https://asciinema.org/a/728549.svg)](https://asciinema.org/a/728549)
 
 Diagnostics — Full mode will run the diagnostics tool against all known CDNs as per the [cache-domains](https://github.com/uklans/cache-domains/) repository.
