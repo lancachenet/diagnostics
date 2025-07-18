@@ -23,12 +23,16 @@ func isLookupInSliceEqual(a []Lookup) []Lookup {
 	return l
 }
 
+func (l Lookup) String() string {
+	return fmt.Sprintf("%s %s %v", l.Hostname, l.Resolver, l.Address)
+}
+
 func unwrapLookups(s, f []Lookup) (success, fail string) {
-	for _, s := range s {
-		success += fmt.Sprintf("+%+v\n", s)
+	for _, lookup := range s {
+		success += "+" + lookup.String() + "\n"
 	}
-	for _, f := range f {
-		fail += fmt.Sprintf("-%+v\n", f)
+	for _, lookup := range f {
+		fail += "-" + lookup.String() + "\n"
 	}
 
 	return success, fail

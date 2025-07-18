@@ -1,9 +1,9 @@
 package main
 
 const (
-	diagSimple = "simple"
-	diagFull   = "full"
-	diagCustom = "custom"
+	diagSimple = "Diagnostics - Simple"
+	diagFull   = "Diagnostics - Full"
+	diagCustom = "Diagnostics - Custom"
 
 	running    = "running"
 	loopback   = "loopback"

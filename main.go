@@ -10,36 +10,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/charmbracelet/huh"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-	mode := ""
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewSelect[string]().
-				Title("Select Mode:").
-				Options(
-					huh.NewOption("Diagnostics - Simple", "simple"),
-					huh.NewOption("Diagnostics - Full", "full"),
-					huh.NewOption("Diagnostics - Custom", "custom"),
-					huh.NewOption("Exit", "exit"),
-				).
-				Value(&mode),
-		),
-	)
+	for {
+		m := newModel("Select Mode:", []string{diagSimple, diagFull, diagCustom, "Exit"}, false)
+		p := tea.NewProgram(&m)
+		fm, err := p.Run()
+		if err != nil {
+			fmt.Println(fmt.Errorf("error: prompt failed %w", err))
+			return
+		}
 
-	err := form.Run()
-	if err != nil {
-		fmt.Println(fmt.Errorf("error: prompt failed %w", err))
-		return
-	}
-
-	switch mode {
-	case "exit":
-		os.Exit(0)
-	default:
-		diagnostics(mode)
+		switch fm.(*Model).Selected {
+		case diagSimple, diagFull, diagCustom:
+			diagnostics(fm.(*Model).Selected)
+		default:
+			return
+		}
 	}
 }
 
@@ -80,8 +69,6 @@ func diagnostics(result string) {
 	case diagCustom:
 		custom(d.Servers, logger)
 	}
-
-	main()
 }
 
 func simple(servers []string, logger io.Writer) {
@@ -97,46 +84,24 @@ func full(servers []string, logger io.Writer, logfile *os.File) {
 }
 
 func custom(servers []string, logger io.Writer) {
-	var (
-		options []huh.Option[string]
-		value   []string
-	)
-
+	var options []string
 	for _, cdn := range CDNs {
-		options = append(options, huh.NewOption(cdn.Name, cdn.Name))
+		options = append(options, cdn.Name)
 	}
 
-	form := huh.NewForm(
-		huh.NewGroup(
-			huh.NewMultiSelect[string]().
-				Height(26).
-				Title("Select CDN(s):").
-				OptionsFunc(func() []huh.Option[string] {
-					return options
-				}, nil).
-				Validate(func(t []string) error {
-					if len(t) <= 0 {
-						return fmt.Errorf("At least one CDN is required.")
-					}
-					return nil
-				}).
-				Value(&value),
-		),
-	)
-
-	err := form.Run()
+	m := newModel("Select CDN(s):", options, true)
+	p := tea.NewProgram(&m)
+	fm, err := p.Run()
 	if err != nil {
 		_, _ = fmt.Fprint(logger, fmt.Errorf("error: prompt failed %w", err))
 		return
 	}
 
-	for _, cdn := range value {
+	for _, cdn := range fm.(*Model).MultiSelected {
 		for _, cdns := range CDNs {
 			if cdn == cdns.Name {
 				hostnames := parseCDN(cdn, cdns.File, logger)
 				lookupHostnames("", hostnames, 1, servers, logger, nil, false)
-			} else {
-				continue
 			}
 		}
 	}
@@ -326,8 +291,7 @@ func resolveIP(hostname, resolver string) ([]string, *http.Transport, error) {
 	ips, err := r.LookupHost(context.Background(), hostname)
 
 	transport := http.Transport{DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-		addr = ips[0] + portHTTP
-		return dialer.DialContext(ctx, network, addr)
+		return dialer.DialContext(ctx, network, ips[0]+portHTTP)
 	}}
 
 	return ips, &transport, err
