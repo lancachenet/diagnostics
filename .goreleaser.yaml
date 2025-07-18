@@ -1,4 +1,5 @@
 project_name: lancache-diagnostics
+version: 2
 
 archives:
   - id: lancache-diagnostics
@@ -27,6 +28,7 @@ changelog:
   sort: asc
   filters:
     exclude:
+      - '^build'
       - '^docs:'
       - '^test:'
 
