@@ -6,7 +6,7 @@ require (
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/huh v0.7.0
-	github.com/miekg/dns v1.1.67
+	github.com/miekg/dns v1.1.68
 	golang.org/x/sys v0.34.0
 )
 
