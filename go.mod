@@ -3,7 +3,7 @@ module lancache-diagnostics
 go 1.25.0
 
 require (
-	github.com/charmbracelet/bubbles v0.21.1
+	github.com/charmbracelet/bubbles/v2 v2.1.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/huh v0.8.0
 	github.com/miekg/dns v1.1.72
