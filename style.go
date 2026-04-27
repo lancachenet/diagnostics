@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
 )
 
 func (s Style) Height() int                               { return 1 }
@@ -19,7 +19,7 @@ func (s Style) Render(w io.Writer, m list.Model, index int, listItem list.Item) 
 		return
 	}
 
-	theme := huh.ThemeCharm()
+	theme := huh.ThemeCharm(false)
 	line := theme.Focused.Base.Render()
 	isMulti := s.Model != nil && s.Model.MultiSelection
 

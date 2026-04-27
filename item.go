@@ -1,6 +1,6 @@
 package main
 
-import "github.com/charmbracelet/bubbles/list"
+import "charm.land/bubbles/v2/list"
 
 func (i Item) Title() string       { return i.title }
 func (i Item) FilterValue() string { return i.title }

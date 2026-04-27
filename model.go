@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/huh"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
 )
 
 func newModel(title string, options []string, multi bool) Model {
@@ -64,7 +64,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.Quitting = true
 			return m, tea.Quit
 
-		case msg.String() == " ":
+		case msg.String() == " ", msg.String() == "space":
 			if m.MultiSelection {
 				if i, ok := m.List.SelectedItem().(Item); ok {
 					m.toggleSelection(i.title)
@@ -123,8 +123,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *Model) View() string {
-	theme := huh.ThemeCharm()
+func (m *Model) View() tea.View {
+	theme := huh.ThemeCharm(false)
 	title := theme.Focused.Base.Render() + theme.Focused.Title.Render(m.Title)
 	help := styledHelp(m.MultiSelection)
 
@@ -135,12 +135,12 @@ func (m *Model) View() string {
 		help = theme.Focused.ErrorMessage.Render(m.Error) + "\n" + help
 	}
 
-	return fmt.Sprintf(
+	return tea.NewView(fmt.Sprintf(
 		"%s\n%s\n\n%s",
 		title,
 		m.List.View(),
 		help,
-	)
+	))
 }
 
 func (m *Model) toggleSelection(name string) {
@@ -193,7 +193,7 @@ func (m *Model) applyFilter(filter string) {
 }
 
 func styledHelp(multi bool) string {
-	theme := huh.ThemeCharm().Help
+	theme := huh.ThemeCharm(false).Help
 
 	segment := func(key, desc string) string {
 		return theme.ShortKey.Render(key) + " " + theme.ShortDesc.Render(desc)
