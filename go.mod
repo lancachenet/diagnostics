@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	charm.land/bubbles/v2 v2.1.1
-	charm.land/bubbletea/v2 v2.0.8
+	charm.land/bubbletea/v2 v2.0.9
 	charm.land/huh/v2 v2.0.3
 	github.com/miekg/dns v1.1.73
 	golang.org/x/sys v0.47.0
