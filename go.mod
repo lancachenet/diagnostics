@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	charm.land/bubbles/v2 v2.2.2
-	charm.land/bubbletea/v2 v2.1.2
+	charm.land/bubbletea/v2 v2.1.3
 	charm.land/huh/v2 v2.0.3
 	github.com/miekg/dns v1.1.73
 	golang.org/x/sys v0.50.0
@@ -16,7 +16,7 @@ require (
 	github.com/catppuccin/go v0.3.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20261008173134-6b8d4baf91b4 // indirect
-	github.com/charmbracelet/x/ansi v0.11.9 // indirect
+	github.com/charmbracelet/x/ansi v0.11.10 // indirect
 	github.com/charmbracelet/x/exp/ordered v0.1.0 // indirect
 	github.com/charmbracelet/x/exp/strings v0.0.0-20250714123521-bc8a1995e079 // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
